@@ -59,6 +59,36 @@ app.post("/products", async (req, res) => {
 
 // Update product by ID
 app.put("/products/:id", async (req, res) => {
+  const data = req.body;
+
+  if (data.hasOwnProperty("stock")) {
+    res.status(400).json({
+      message:
+        "Operation not allowed. The product's stock must be updated using its specific route.",
+    });
+    return;
+  }
+
+  try {
+    console.log("edit received");
+    const { id } = req.params;
+    const updatedProduct = await productController.editProduct(
+      parseInt(id),
+      req.body
+    );
+
+    if (updatedProduct) {
+      res.json(updatedProduct);
+    } else {
+      res.status(404).json({ message: "Product not found." });
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Update stock
+app.put("/products/:id/stock", async (req, res) => {
   try {
     console.log("edit received");
     const { id } = req.params;

@@ -40,6 +40,13 @@ class ProductService {
    * @param {object} updatedData - Fields to update.
    */
   async update(id, updatedData) {
+    console.log(updatedData);
+    if (updatedData.hasOwnProperty("stock")) {
+      throw new Error(
+        "Stock must be updated using the dedicated /products/:id/stock endpoint."
+      );
+    }
+
     if (
       updatedData.price &&
       (typeof updatedData.price !== "number" || updatedData.price <= 0)

@@ -16,10 +16,13 @@ class OrderController {
     }
   }
 
-  // GET /clients/:clientId/orders - Required Method
+  // GET /clients/:id/orders - Required Method
   async getOrdersByClient(req, res) {
+    console.log("Get order controller");
+    const { id } = req.params;
+    console.log(id);
     try {
-      const orders = await OrderService.getOrdersByClient(req.params.clientId);
+      const orders = await OrderService.getOrdersByClient(id);
       res.status(200).json(orders);
     } catch (error) {
       res.status(500).json({ error: "Could not fetch client orders." });
@@ -28,6 +31,7 @@ class OrderController {
 
   // PATCH /orders/:id/status
   async updateStatus(req, res) {
+    console.log("Update order controller");
     try {
       const { newStatus } = req.body; // Expects a status like 'PAID' or 'FAILED'
       const updatedOrder = await OrderService.updatePaymentStatus(
@@ -39,8 +43,6 @@ class OrderController {
       res.status(400).json({ error: error.message });
     }
   }
-
-  // ... other methods like getOrderById
 }
 
 export default OrderController;

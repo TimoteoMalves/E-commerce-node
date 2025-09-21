@@ -93,11 +93,9 @@ class OrderService {
 
   // UPDATE Payment Status
   async updatePaymentStatus(orderId, newStatus) {
-    // NOTE: This validation assumes prisma.PaymentStatus is accessible or defined elsewhere.
-    // For the purposes of fixing the order creation, we'll leave this as-is.
-    if (!Object.keys(prisma.PaymentStatus).includes(newStatus)) {
-      throw new Error(`Invalid payment status: ${newStatus}`);
-    }
+    console.log("Update order service");
+    console.log(`Id: ${orderId}`);
+    console.log(`newstatus: ${newStatus}`);
 
     return prisma.order.update({
       where: { id: parseInt(orderId) },

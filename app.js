@@ -148,12 +148,14 @@ app.post("/orders", async (req, res) => {
 });
 
 // Get all orders for a specific client (Required Method)
-app.get("/clients/:clientId/orders", async (req, res) => {
+app.get("/clients/:id/orders", async (req, res) => {
+  console.log("Get order received");
   await orderController.getOrdersByClient(req, res);
 });
 
 // Update order's payment status
-app.patch("/orders/:id/status", async (req, res) => {
+app.put("/orders/:id/status", async (req, res) => {
+  console.log("Update order received");
   await orderController.updateStatus(req, res);
 });
 

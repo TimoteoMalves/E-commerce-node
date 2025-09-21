@@ -1,15 +1,27 @@
-const express = require("express");
-const productController = require("./controllers/productController");
+import express from "express";
 
+import productController from "./controllers/productController.js";
+import clientController from "./controllers/clientController.js";
+import OrderController from "./controllers/orderController.js";
 const app = express();
+
+const orderController = new OrderController();
 
 const port = 3000;
 
 app.use(express.json());
 
+// Root route
+app.get("/", (req, res) => {
+  res.send("Welcome to the e-commerce API!");
+});
+
+// #region Product Routes
+
 // Get all products
 app.get("/products", async (req, res) => {
   try {
+    console.log("fetchAll received");
     const products = await productController.fetchAll();
     res.json(products);
   } catch (error) {
@@ -17,9 +29,10 @@ app.get("/products", async (req, res) => {
   }
 });
 
-// Filter product by ID
+// Get product by ID
 app.get("/products/:id", async (req, res) => {
   try {
+    console.log("Filter received");
     const { id } = req.params;
     const filteredProduct = await productController.filterProduct(parseInt(id));
 
@@ -29,13 +42,14 @@ app.get("/products/:id", async (req, res) => {
       res.status(404).json({ message: "Product not found." });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error filtering product." });
+    res.status(500).json({ message: "Error fetching product." });
   }
 });
 
-// Register product
-app.post("/product", async (req, res) => {
+// Create new product
+app.post("/products", async (req, res) => {
   try {
+    console.log("register received");
     const newProduct = await productController.registerProduct(req.body);
     res.status(201).json(newProduct);
   } catch (error) {
@@ -43,9 +57,10 @@ app.post("/product", async (req, res) => {
   }
 });
 
-// Edit product by ID
-app.put("/product/:id", async (req, res) => {
+// Update product by ID
+app.put("/products/:id", async (req, res) => {
   try {
+    console.log("edit received");
     const { id } = req.params;
     const updatedProduct = await productController.editProduct(
       parseInt(id),
@@ -62,8 +77,10 @@ app.put("/product/:id", async (req, res) => {
   }
 });
 
-app.delete("/product/:id", async (req, res) => {
+// Delete product by ID
+app.delete("/products/:id", async (req, res) => {
   try {
+    console.log("delete received");
     const { id } = req.params;
     await productController.deleteProduct(parseInt(id));
     res.status(200).json({ message: `Product deleted` });
@@ -72,29 +89,42 @@ app.delete("/product/:id", async (req, res) => {
   }
 });
 
-// Get order
-app.get("/order", async (req, res) => {
-  try {
-    const orders = await productController.getAllOrders();
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({ message: "Error getting orders." });
-  }
+// #region Client
+
+// Create new client
+app.post("/clients", async (req, res) => {
+  console.log("Create cliente received");
+  console.log(req.body);
+  await clientController.create(req, res);
 });
+
+// Get client by ID
+app.get("/clients/:id", async (req, res) => {
+  console.log("Create cliente received");
+  await clientController.getById(req, res);
+});
+
+// Update client by ID
+app.put("/clients/:id", async (req, res) => {
+  console.log("Create cliente received");
+  await clientController.update(req, res);
+});
+
+// #region Order Routes
 
 // Create a new order
-app.post("/order", async (req, res) => {
-  try {
-    const newOrder = await productController.createOrder(req.body);
-    res.status(201).json(newOrder);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
+app.post("/orders", async (req, res) => {
+  await orderController.create(req, res);
 });
 
-// Root route
-app.get("/", (req, res) => {
-  res.send("Welcome to the homepage!");
+// Get all orders for a specific client (Required Method)
+app.get("/clients/:clientId/orders", async (req, res) => {
+  await orderController.getOrdersByClient(req, res);
+});
+
+// Update order's payment status
+app.patch("/orders/:id/status", async (req, res) => {
+  await orderController.updateStatus(req, res);
 });
 
 app.listen(port, () => {

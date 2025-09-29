@@ -1,0 +1,16 @@
+{
+  "name": "order-service",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Service to manage orders",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2",
+    "axios": "^1.12.2",
+    "express": "^5.1.0",
+    "prisma": "^6.16.2"
+  }
+}

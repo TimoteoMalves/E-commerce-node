@@ -1,0 +1,139 @@
+services:
+  orders-db:
+    image: mongo:latest
+    container_name: orders_db
+    restart: always
+    environment:
+      TZ: America/Sao_Paulo
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - orders_mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  # PostgreSQL para Payment Service
+  payments-db:
+    image: postgres:15
+    container_name: payments_db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: payments_db
+    volumes:
+      - payments_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432" # Host: 5434 / Container: 5432
+
+  # NOVO: PostgreSQL para Client Service
+  client-db:
+    image: postgres:15
+    container_name: client_db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: client_db
+    ports:
+      - "5435:5432" # Host: 5435 / Container: 5432
+    volumes:
+      - client_postgres_data:/var/lib/postgresql/data
+
+  # NOVO: PostgreSQL para Product Service
+  product-db:
+    image: postgres:15
+    container_name: product_db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: product_db
+    ports:
+      - "5436:5432" # Host: 5436 / Container: 5432
+    volumes:
+      - product_postgres_data:/var/lib/postgresql/data
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    restart: always
+    ports:
+      - "3003:3003"
+    environment:
+      - DATABASE_URL=mongodb://orders-db:27017/orders_db?authSource=admin&replicaSet=rs0
+      - PRODUCT_API_URL=http://product-service:3002
+      - PAYMENT_API_URL=http://payment-service:3004
+    depends_on:
+      - orders-db
+
+  payment-service:
+    build: ./payment-service
+    container_name: payments_service
+    restart: always
+    ports:
+      - "3004:3004"
+    environment:
+      - DATABASE_URL=postgresql://root:root@payments-db:5432/payments_db
+      - ORDER_API_URL=http://order-service:3003
+    depends_on:
+      - payments-db
+      - order-service
+
+  client-service:
+    build: ./client-service
+    container_name: clients_service
+    restart: always
+    # Host Port: 3001 / Container Port: 3001
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://root:root@client-db:5432/client_db
+    depends_on:
+      - client-db
+
+  product-service:
+    build: ./product-service
+    container_name: products_service
+    restart: always
+    ports:
+      - "3002:3002"
+    environment:
+      - DATABASE_URL=postgresql://root:root@product-db:5432/product_db
+    depends_on:
+      - product-db
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_ui
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - payments-db
+      - client-db
+      - product-db
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo_express_ui
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@orders-db:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: root
+      ME_CONFIG_BASICAUTH_PASSWORD: root
+    depends_on:
+      - orders-db
+
+volumes:
+  orders_mongo_data:
+  payments_postgres_data:
+  client_postgres_data:
+  product_postgres_data:
+  pgadmin_data:

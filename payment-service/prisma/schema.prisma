@@ -29,7 +29,7 @@ model PaymentType {
 
 model Payment {
   id                Int             @id @default(autoincrement())
-  orderId           Int             
+  orderId           String             
   paymentTypeId     Int
   paymentType       PaymentType     @relation(fields: [paymentTypeId], references: [id])
   amount            Float

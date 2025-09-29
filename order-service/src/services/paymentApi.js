@@ -7,15 +7,21 @@ const PAYMENT_SERVICE_URL =
 export async function createTransaction(orderId, amount, paymentTypeId = 1) {
   console.log(`[PaymentApi] POST ${PAYMENT_SERVICE_URL}/payments`);
 
+  const paymentPayload = {
+    orderId: orderId,
+    amount: amount,
+    paymentTypeId: paymentTypeId,
+  };
+
   try {
     const response = await axios.post(
       `${PAYMENT_SERVICE_URL}/payments`,
-      paymentData
+      paymentPayload
     );
 
     return response.data;
   } catch (error) {
-    console.error(`[PaymentApi] ERRO ao criar pagamento: ${error.message}`);
+    console.error(`[PaymentApi] ERRO - Criar pagamento: ${error.message}`);
     // Relança o erro com uma mensagem útil para o Order Service tratar
     throw new Error(
       `Failed to initiate payment: ${

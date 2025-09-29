@@ -28,34 +28,41 @@ class OrderController {
   }
 
   // GET /clients/:id/orders - Required Method
-  async getOrdersByClient(req, res) {
-    console.log("Get order controller");
-    const { id } = req.params;
-    console.log(id);
+  async getOrdersByClient(id) {
+    console.log("Got to controller");
     try {
       const orders = await orderRepository.getOrdersByClient(id);
-      res.status(200).json(orders);
+      return orders;
     } catch (error) {
-      res.status(500).json({ error: "Could not fetch client orders." });
+      throw new Error(error);
     }
+  }
+
+  async getOrderById(id) {
+    console.log("Got to order controller");
+    console.log(`O Id: ${id}`);
+    return orderRepository.getOrderById(id);
   }
 
   // PATCH /orders/:id/status
   async updateStatus(req, res) {
     console.log("Update order controller");
+    const orderId = req.params.id;
+    console.log(orderId);
     try {
       const { newStatus } = req.body;
       const updatedOrder = await orderRepository.updatePaymentStatus(
-        req.params.id,
+        String(orderId),
         newStatus
       );
 
+      console.log(`Order updated: ${updatedOrder}`);
+
+      const products = await orderRepository.getOrderById(orderId);
+      console.log(`products: ${products}`);
+
       if (newStatus == "PAID") {
-        try {
-          await orderRepository.handlePaymentConfirmed(updatedOrder);
-        } catch (erro) {
-          res.status(400).json(orders);
-        }
+        await orderRepository.handlePaymentConfirmed(orderId, products);
       }
 
       res.status(200).json(updatedOrder);

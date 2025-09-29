@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import ProductApi from "../services/productApi.js";
+import { ObjectId } from "mongodb";
 
 const prisma = new PrismaClient();
 const productApi = new ProductApi();
@@ -109,30 +110,34 @@ class OrderRepository {
   }
 
   // READ (All Orders for a Client)
-  async getOrdersByClient(clientId) {
+  async getOrdersByClient(id) {
+    console.log("got to repository");
     return prisma.order.findMany({
-      where: {
-        clientId: parseInt(clientId),
-      },
+      where: { clientId: id },
+    });
+  }
+
+  // READ
+  // async getOrderById(id) {
+  //   console.log("Got to repository");
+  //   return prisma.order.findUnique({ where: { id } });
+  // }
+  async getOrderById(id) {
+    console.log("got to repository");
+    return prisma.order.findUnique({
+      where: { id },
       include: {
-        orderItems: {
-          include: {
-            product: true,
-          },
-        },
+        orderItems: true,
       },
-      orderBy: { createdAt: "desc" },
     });
   }
 
   // UPDATE Payment Status
   async updatePaymentStatus(orderId, newStatus) {
-    console.log("Update order service");
-    console.log(`Id: ${orderId}`);
-    console.log(`newstatus: ${newStatus}`);
-
+    console.log("Update order repository");
+    console.log(orderId);
     return prisma.order.update({
-      where: { id: parseInt(orderId) },
+      where: { id: new ObjectId(orderId) },
       data: {
         status: newStatus,
         updatedAt: new Date(),
@@ -141,6 +146,7 @@ class OrderRepository {
   }
 
   async handlePaymentConfirmed(orderId, items) {
+    console.log("Going for stock");
     await productApi.deductStock(items);
   }
 }

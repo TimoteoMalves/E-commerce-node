@@ -26,11 +26,12 @@ app.post("/orders/clients/:id", async (req, res) => {
 // Get all orders for a specific client (Required Method)
 app.get("/clients/:id/orders", async (req, res) => {
   console.log("GET client orders received");
-
+  const { id } = req.params;
+  console.log(id);
   try {
-    const clientOrders = await OrderController.getOrdersByClient(req, res);
+    const clientOrders = await OrderController.getOrdersByClient(id);
 
-    if (!order) {
+    if (!clientOrders) {
       res
         .status(400)
         .json({ message: `No order were found for client ${req.body.id}` });
@@ -38,6 +39,19 @@ app.get("/clients/:id/orders", async (req, res) => {
     res.status(200).json(clientOrders);
   } catch (error) {
     res.status(400).json({ message: "Erro getting client's orders" });
+  }
+});
+
+app.get("/orders/:id", async (req, res) => {
+  const { id } = req.params;
+  console.log(`Get order ${id}`);
+  try {
+    const order = await OrderController.getOrderById(id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.status(200).json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
   }
 });
 

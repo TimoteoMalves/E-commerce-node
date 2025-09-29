@@ -6,13 +6,11 @@ const PRODUCT_SERVICE_URL =
 
 class ProductApi {
   async deductStock(items) {
-    console.log(
-      `[ProductApi] PATCH ${PRODUCT_SERVICE_URL}/products/stock/deduct`
-    );
+    console.log(`[ProductApi] PATCH ${PRODUCT_SERVICE_URL}/products/:id/stock`);
 
     try {
       const response = await axios.patch(
-        `${PRODUCT_SERVICE_URL}/products/stock/deduct`,
+        `${PRODUCT_SERVICE_URL}/products/:id/stock`,
         { items } // Envia o array de itens no corpo da requisição
       );
 

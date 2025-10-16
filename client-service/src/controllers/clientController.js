@@ -5,9 +5,9 @@ class ClientController {
   async create(req, res) {
     try {
       const client = await ClientRepository.createClient(req.body);
-      return client;
+      return res.status(200).json(client);
     } catch (error) {
-      return error;
+      return res.status(406).json({ message: error });
     }
   }
 
@@ -15,9 +15,9 @@ class ClientController {
   async getById(req, res) {
     try {
       const client = await ClientRepository.getClientById(req.params.id);
-      return client;
+      return res.status(200).json(client);
     } catch (error) {
-      return error;
+      return res.status(406).json({ message: error });
     }
   }
 
@@ -44,7 +44,7 @@ class ClientController {
       );
       res.status(200).json(updatedClient);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      res.status(406).json({ error: error.message });
     }
   }
 }

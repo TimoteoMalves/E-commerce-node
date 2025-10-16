@@ -17,6 +17,10 @@ app.get("/payments/:id", (req, res) => {
   paymentController.getById(req, res);
 });
 
+app.post("/payments/method", (req, res) => {
+  console.log("POST payment type");
+});
+
 // PATCH processo pagamento
 app.patch("/payments/:id/status", (req, res) => {
   console.log("PATCH payment received");

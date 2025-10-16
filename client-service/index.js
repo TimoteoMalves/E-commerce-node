@@ -9,8 +9,8 @@ app.use(express.json());
 app.post("/clients", async (req, res) => {
   console.log("POST client received");
   try {
-    await clientController.create(req, res);
-    res.status(204);
+    const client = await clientController.create(req, res);
+    res.status(204).json({ client });
   } catch (error) {
     res.status(500).json({ message: "Error creating client." });
   }
@@ -24,7 +24,7 @@ app.get("/clients/:id", async (req, res) => {
     if (!client) {
       res.status(200).json({ message: "No clients were found" });
     }
-    res.status(200).json("No client was found");
+    res.status(200).json(client);
   } catch (error) {
     res.status(500).json({ message: "Error getting client." });
   }
@@ -33,17 +33,7 @@ app.get("/clients/:id", async (req, res) => {
 // Get all clients
 app.get("/clients", async (req, res) => {
   console.log("GET all clients received");
-  try {
-    const clients = await clientController.fetchAllClients();
-
-    if (!clients) {
-      res.status(400).json({ message: "No clients were found" });
-    }
-
-    res.status(200).json(clients);
-  } catch (error) {
-    res.status(500).json({ message: error });
-  }
+  await clientController.fetchAllClients(req, res);
 });
 
 // Update client by ID

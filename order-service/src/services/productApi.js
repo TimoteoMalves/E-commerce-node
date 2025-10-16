@@ -9,12 +9,22 @@ class ProductApi {
     console.log(`[ProductApi] PATCH ${PRODUCT_SERVICE_URL}/products/:id/stock`);
 
     try {
-      const response = await axios.patch(
-        `${PRODUCT_SERVICE_URL}/products/:id/stock`,
-        { items } // Envia o array de itens no corpo da requisição
-      );
+      const results = [];
 
-      return response.data;
+      for (const item of items) {
+        console.log(
+          `[ProductApi] Deduzindo estoque do produto ${item.productId} (quantidade: ${item.quantity})`
+        );
+
+        const response = await axios.patch(
+          `${PRODUCT_SERVICE_URL}/products/${item.productId}/stock`,
+          { quantity: item.quantity } // manda só a quantidade
+        );
+
+        results.push(response.data);
+      }
+
+      return results;
     } catch (error) {
       console.error(`[ProductApi] ERRO ao deduzir estoque: ${error.message}`);
       throw new Error(

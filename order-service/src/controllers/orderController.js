@@ -58,11 +58,14 @@ class OrderController {
 
       console.log(`Order updated: ${updatedOrder}`);
 
-      const products = await orderRepository.getOrderById(orderId);
-      console.log(`products: ${products}`);
+      const orderWithItems = await orderRepository.getOrderById(orderId);
+      console.log("Order with items:", orderWithItems);
 
-      if (newStatus == "PAID") {
-        await orderRepository.handlePaymentConfirmed(orderId, products);
+      if (newStatus === "PAID" && orderWithItems?.orderItems) {
+        await orderRepository.handlePaymentConfirmed(
+          orderId,
+          orderWithItems.orderItems
+        );
       }
 
       res.status(200).json(updatedOrder);

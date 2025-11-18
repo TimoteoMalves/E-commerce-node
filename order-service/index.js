@@ -1,15 +1,69 @@
 import express from "express";
+import { Kafka } from "kafkajs";
+import OrderController from "./src/controllers/orderController.js";
 const app = express();
 const PORT = 3003;
-import OrderController from "./src/controllers/orderController.js";
 
 app.use(express.json());
+
+const kafkaClient = new Kafka({
+  clientId: "pedido-producer",
+  brokers: ["kafka:9094"],
+});
+
+const producer = kafkaClient.producer();
+const TOPIC_NAME = "pedidos";
+
+async function connectAndSetupKafka() {
+  try {
+    await producer.connect();
+    console.log("Produtor conectado ao Kafka e pronto para enviar eventos.");
+  } catch (error) {
+    console.error("Erro no produtor Kafka:", error);
+    await producer.disconnect();
+    process.exit(1);
+  }
+}
+
+async function initializeApp() {
+  try {
+    await connectAndSetupKafka();
+
+    app.listen(PORT, () => {
+      console.log(`[Payment Service] listening on port: ${PORT}`);
+    });
+  } catch (error) {
+    console.log("Erro connecting to kafka");
+    process.exit(1);
+  }
+}
 
 // Create a new order
 app.post("/orders/clients/:id", async (req, res) => {
   console.log("POST order received");
   try {
     const order = await OrderController.create(req, res);
+
+    const pedido = {
+      id: order.id,
+      cliente: req.params.id,
+      valor: order.totalPrice,
+      criadoEm: new Date().toISOString(),
+    };
+
+    const message = {
+      key: pedido.id.toString(),
+      value: JSON.stringify(pedido),
+    };
+
+    producer.send({
+      topic: TOPIC_NAME,
+      messages: [message],
+    });
+
+    console.log(
+      `[x] Evento 'PedidoCriado' enviado ao tópico '${TOPIC_NAME}': ${message.value}`
+    );
 
     if (!order) {
       res
@@ -66,6 +120,8 @@ app.patch("/orders/:id/status", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`[Payment Service] listening on port: ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`[Payment Service] listening on port: ${PORT}`);
+// });
+
+initializeApp();

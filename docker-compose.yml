@@ -11,45 +11,42 @@ services:
     ports:
       - "27017:27017"
 
-  # PostgreSQL para Payment Service
   payments-db:
     image: postgres:15
-    container_name: payments_db
+    container_name: payments-db
     restart: always
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: payments_db
+      POSTGRES_DB: payments-db
     volumes:
       - payments_postgres_data:/var/lib/postgresql/data
     ports:
-      - "5434:5432" # Host: 5434 / Container: 5432
+      - "5434:5432"
 
-  # NOVO: PostgreSQL para Client Service
   client-db:
     image: postgres:15
-    container_name: client_db
+    container_name: client-db
     restart: always
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: client_db
+      POSTGRES_DB: client-db
     ports:
-      - "5435:5432" # Host: 5435 / Container: 5432
+      - "5435:5432"
     volumes:
       - client_postgres_data:/var/lib/postgresql/data
 
-  # NOVO: PostgreSQL para Product Service
   product-db:
     image: postgres:15
-    container_name: product_db
+    container_name: product-db
     restart: always
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: product_db
+      POSTGRES_DB: product-db
     ports:
-      - "5436:5432" # Host: 5436 / Container: 5432
+      - "5436:5432"
     volumes:
       - product_postgres_data:/var/lib/postgresql/data
 
@@ -83,7 +80,6 @@ services:
     build: ./client-service
     container_name: clients_service
     restart: always
-    # Host Port: 3001 / Container Port: 3001
     ports:
       - "3001:3001"
     environment:
@@ -131,9 +127,106 @@ services:
     depends_on:
       - orders-db
 
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    restart: always
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
+      - INFLUXDB_HTTP_AUTH_ENABLED=false
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+      - ./influxdb-init/init-influxdb.sh:/docker-entrypoint-initdb.d/init-influxdb.sh
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    restart: always
+    ports:
+      - "3005:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - influxdb
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  k6:
+    image: grafana/k6:latest
+    container_name: k6_runner
+    depends_on:
+      - payment-service
+      - order-service
+      - influxdb
+    volumes:
+      - ./k6-scripts:/scripts
+    entrypoint: ["k6"]
+    networks:
+      - default
+
+  notification-service:
+    build:
+      context: ./message-service
+    container_name: notification_consumer
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://kafka:9094
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8090:8090"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-kafka-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: "true"
+
 volumes:
   orders_mongo_data:
   payments_postgres_data:
   client_postgres_data:
   product_postgres_data:
   pgadmin_data:
+  grafana_data:
+  influxdb_data:

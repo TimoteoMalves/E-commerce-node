@@ -1,0 +1,2 @@
+- colocar npx prisma migrate dev no docker compose também.
+- trocar o mongodb

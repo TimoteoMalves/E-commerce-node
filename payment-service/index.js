@@ -1,5 +1,6 @@
 import express from "express";
 import amqp from "amqplib";
+import { Kafka } from "kafkajs";
 import paymentController from "./src/controllers/paymentController.js";
 const app = express();
 const PORT = 3004;
@@ -11,6 +12,46 @@ const EXCHANGE_TYPE = "fanout";
 app.use(express.json());
 
 let channel;
+
+//#region Kafka
+
+const KAFKA_BROKERS = ["kafka:9094"]; // ⬅️ O mesmo broker do serviço de pedidos
+const KAFKA_TOPIC = "pedidos"; // ⬅️ O tópico a ser consumido
+const KAFKA_GROUP_ID = "payment-consumer-group"; // ⬅️ Grupo de consumo
+
+const kafka = new Kafka({
+  clientId: "payment-consumer",
+  brokers: KAFKA_BROKERS,
+});
+const consumer = kafka.consumer({ groupId: KAFKA_GROUP_ID });
+
+async function connectAndSetupKafkaConsumer() {
+  try {
+    await consumer.connect();
+    await consumer.subscribe({ topic: KAFKA_TOPIC, fromBeginning: true });
+
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        const orderData = JSON.parse(message.value.toString());
+
+        console.log(`\n🎉 [Kafka] Pedido Recebido: Tópico: ${topic}`);
+        console.log("Conteúdo do Pedido:", orderData);
+      },
+    });
+
+    console.log(
+      `Consumidor Kafka conectado e escutando o tópico: ${KAFKA_TOPIC}`
+    );
+  } catch (error) {
+    console.error("🚨 Erro no consumidor Kafka:", error);
+    // Tenta reconectar o consumidor após um atraso em caso de falha crítica
+    setTimeout(connectAndSetupKafkaConsumer, 10000);
+  }
+}
+
+//#endregion
+
+//#region RabbitMQ
 
 async function connectAndSetupRabbitMQ() {
   try {
@@ -30,6 +71,8 @@ async function connectAndSetupRabbitMQ() {
     throw error;
   }
 }
+
+//#endregion
 
 app.post("/payments", async (req, res) => {
   if (!channel) {
@@ -68,6 +111,7 @@ app.post("/payments", async (req, res) => {
 async function initializeApp() {
   try {
     await connectAndSetupRabbitMQ();
+    await connectAndSetupKafkaConsumer();
 
     app.listen(PORT, () => {
       console.log(`[Payment Service] listening on port: ${PORT}`);

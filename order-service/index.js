@@ -56,14 +56,15 @@ app.post("/orders/clients/:id", async (req, res) => {
       value: JSON.stringify(pedido),
     };
 
-    producer.send({
+    const deliveryResult = await producer.send({
       topic: TOPIC_NAME,
       messages: [message],
     });
 
     console.log(
-      `[x] Evento 'PedidoCriado' enviado ao tópico '${TOPIC_NAME}': ${message.value}`
+      `[x] Evento 'PedidoCriado' enviado ao tópico '${TOPIC_NAME}': ${message.value} na Partição ${deliveryResult[0].partition}`
     );
+    res.status(200).json({ Message: "Order created succefully" });
   } catch (error) {
     console.log(`Error creating order`);
   }

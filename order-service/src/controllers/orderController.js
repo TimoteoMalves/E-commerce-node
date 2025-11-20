@@ -13,15 +13,17 @@ class OrderController {
         products
       );
 
-      const orderId = order.id;
-      console.log("Creating payment transaction");
-      const payment = await createTransaction(orderId, order.totalPrice);
+      return order;
 
-      res
-        .status(201)
-        .json(
-          `[Order service] - Order ${orderId} and Paayment transaction ${payment.id} created`
-        );
+      //Comentado por que agora o serviço enviar para uma fila do kafka
+      // console.log("Creating payment transaction");
+      // const payment = await createTransaction(orderId, order.totalPrice);
+
+      // res
+      //   .status(201)
+      //   .json(
+      //     `[Order service] - Order ${orderId} and Paayment transaction ${payment.id} created`
+      //   );
     } catch (error) {
       res.status(400).json({ error: error.message });
     }

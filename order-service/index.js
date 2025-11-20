@@ -64,16 +64,8 @@ app.post("/orders/clients/:id", async (req, res) => {
     console.log(
       `[x] Evento 'PedidoCriado' enviado ao tópico '${TOPIC_NAME}': ${message.value}`
     );
-
-    if (!order) {
-      res
-        .status(400)
-        .json({ message: `No client with id ${req.body.id} was found` });
-    }
-
-    res.status(200).json(order);
   } catch (error) {
-    res.status(400).json({ message: "Erro getting order" });
+    console.log(`Error creating order`);
   }
 });
 

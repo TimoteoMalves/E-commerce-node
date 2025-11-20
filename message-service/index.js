@@ -31,7 +31,11 @@ async function startConsumer() {
       (msg) => {
         if (msg.content) {
           const payment = JSON.parse(msg.content.toString());
-          console.log(`[!] Recebido evento 'Pagamento criado' [${payment}].`);
+          console.log(
+            `[!] Recebido evento 'Pagamento criado' [${JSON.stringify(
+              payment
+            )}].`
+          );
         }
       },
       {

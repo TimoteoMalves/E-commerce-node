@@ -14,6 +14,66 @@ const kafkaClient = new Kafka({
 const producer = kafkaClient.producer();
 const TOPIC_NAME = "pedidos";
 
+// Seeding
+const defaultOrders = [
+  {
+    clientId: 1,
+    description: "Primeiro Pedido do Cliente 1",
+    totalPrice: 17000.0,
+    products: [
+      { id: 1, quantity: 1, subtotal: 5000 },
+      { id: 2, quantity: 2, subtotal: 12000 },
+    ],
+  },
+  {
+    clientId: 2,
+    description: "Primeiro Pedido do Cliente 2",
+    totalPrice: 5000.0,
+    products: [{ id: 1, quantity: 1, subtotal: 5000 }],
+  },
+];
+
+//Seeding
+async function seedDefaultOrders() {
+  console.log("Iniciando o seeding de pedidos...");
+
+  for (const orderSeed of defaultOrders) {
+    try {
+      // Simulação da Requisição:
+      const req = {
+        params: { id: orderSeed.clientId }, // ID do Cliente na URL (clients/:id)
+        body: orderSeed,
+      };
+
+      // Simulação da Resposta:
+      const res = {
+        status: (statusCode) => {
+          return res;
+        },
+        json: (data) => {
+          return data;
+        },
+        send: (msg) => {},
+      };
+
+      console.log("Starting seeding");
+      const newOrder = await OrderController.create(req, res);
+
+      console.log(
+        `[SEEDING] Pedido criado para Cliente ID ${orderSeed.clientId} (MongoDB ID: ${newOrder.id})`
+      );
+    } catch (error) {
+      console.error(
+        `[SEEDING ERROR] Falha ao inserir pedido para Cliente ${orderSeed.clientId}:`,
+        error.message
+      );
+    }
+  }
+  console.log("Seeding de pedidos concluído.");
+}
+
+// --- 3. INÍCIO DO SERVIDOR APÓS O SEEDING E KAFKA ---
+
 async function connectAndSetupKafka() {
   try {
     await producer.connect();
@@ -29,14 +89,19 @@ async function initializeApp() {
   try {
     await connectAndSetupKafka();
 
+    // 🚨 AQUI ENTRA O SEEDING, DEPOIS DO KAFKA ESTAR CONECTADO
+    await seedDefaultOrders();
+
     app.listen(PORT, () => {
-      console.log(`[Payment Service] listening on port: ${PORT}`);
+      console.log(`[Order Service] listening on port: ${PORT}`);
     });
   } catch (error) {
-    console.log("Erro connecting to kafka");
+    console.log("Erro connecting to kafka or seeding failed");
     process.exit(1);
   }
 }
+
+// --- ROTAS (Não modificadas) ---
 
 // Create a new order
 app.post("/orders/clients/:id", async (req, res) => {
@@ -112,9 +177,5 @@ app.patch("/orders/:id/status", async (req, res) => {
     res.status(400).json({ message: "Error updating status" });
   }
 });
-
-// app.listen(PORT, () => {
-//   console.log(`[Payment Service] listening on port: ${PORT}`);
-// });
 
 initializeApp();

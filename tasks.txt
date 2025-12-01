@@ -1,1 +1,2 @@
 - todas as rotas estão funcionando.
+- docker exec -it clients_service npx prisma db push (tive que rodar isso)

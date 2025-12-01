@@ -1,7 +1,7 @@
 services:
   orders-db:
     image: mongo:latest
-    container_name: orders_db
+    container_name: orders-db
     restart: always
     environment:
       TZ: America/Sao_Paulo
@@ -63,6 +63,7 @@ services:
       - PAYMENT_API_URL=http://payment-service:3004
     depends_on:
       - orders-db
+      - kafka
 
   payment-service:
     build: ./payment-service
@@ -71,11 +72,13 @@ services:
     ports:
       - "3004:3004"
     environment:
-      - DATABASE_URL=postgresql://root:root@payments-db:5432/payments_db
+      - DATABASE_URL=postgresql://root:root@payments-db:5432/payments-db
       - ORDER_API_URL=http://order-service:3003
     depends_on:
       - payments-db
       - order-service
+      - kafka
+      - rabbitmq
 
   client-service:
     build: ./client-service
@@ -84,7 +87,7 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - DATABASE_URL=postgresql://root:root@client-db:5432/client_db
+      - DATABASE_URL=postgresql://root:root@client-db:5432/client-db
     depends_on:
       - client-db
 
@@ -95,7 +98,7 @@ services:
     ports:
       - "3002:3002"
     environment:
-      - DATABASE_URL=postgresql://root:root@product-db:5432/product_db
+      - DATABASE_URL=postgresql://root:root@product-db:5432/product-db
     depends_on:
       - product-db
 

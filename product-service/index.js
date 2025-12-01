@@ -5,6 +5,73 @@ import productController from "./src/controllers/productController.js";
 
 app.use(express.json());
 
+// Seeds
+const defaultProducts = [
+  {
+    name: "Bicicleta",
+    description: "Monark",
+    price: 3000,
+    stock: 20,
+  },
+  {
+    name: "Fogão",
+    description: "Brastemp",
+    price: 801,
+    stock: 20,
+  },
+  {
+    name: "Geladeira",
+    description: "Brastemp",
+    price: 2700,
+    stock: 50,
+  },
+];
+
+//Seeding
+async function seedDefaultProducts() {
+  console.log("Iniciando o seeding de produtos...");
+
+  for (const productData of defaultProducts) {
+    try {
+      const res = {
+        status: (statusCode) => {
+          if (statusCode === 409) {
+            console.log(
+              `[SEEDING] Produto '${productData.name}' já existe. Ignorando.`
+            );
+          }
+          return res;
+        },
+        json: (data) => {
+          return data;
+        },
+        send: (msg) => {
+          if (msg && msg.includes("already exists")) {
+            console.log(
+              `[SEEDING] Produto '${productData.name}' já existe. Ignorando.`
+            );
+          }
+        },
+      };
+
+      console.log("Starting seeding");
+      await productController.registerProduct(productData, res);
+
+      console.log(
+        `[SEEDING] Produto '${productData.name}' inserido/verificado com sucesso.`
+      );
+    } catch (error) {
+      console.error(
+        `[SEEDING ERROR] Falha ao inserir produto ${productData.name}:`,
+        error.message
+      );
+    }
+  }
+  console.log("Seeding de produtos concluído.");
+}
+
+// --- ROTAS ---
+
 app.get("/products", async (req, res) => {
   console.log("fetchAll received");
   await productController.fetchAll(req, res);
@@ -53,6 +120,12 @@ app.delete("/products/:id", async (req, res) => {
   await productController.deleteProduct(parseInt(id), res);
 });
 
-app.listen(PORT, () => {
-  console.log(`[Client Service] listening on port: ${PORT}`);
-});
+async function startServer() {
+  await seedDefaultProducts();
+
+  app.listen(PORT, () => {
+    console.log(`[Product Service] listening on port: ${PORT}`);
+  });
+}
+
+startServer();

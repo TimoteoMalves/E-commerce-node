@@ -5,6 +5,69 @@ import clientController from "./src/controllers/clientController.js";
 
 app.use(express.json());
 
+// Seed
+const defaultClients = [
+  {
+    firstName: "Fabricio",
+    lastName: "Bruno",
+    email: "naomereceu@gmail.com",
+  },
+  {
+    firstName: "Gabriel",
+    lastName: "Magalhaes",
+    email: "Magalhaes@gmail.com",
+  },
+];
+
+// Seeding
+async function seedDefaultClients() {
+  console.log("Iniciando o seeding de clientes...");
+
+  for (const clientData of defaultClients) {
+    try {
+      const req = {
+        body: clientData,
+      };
+
+      let clientExists = false;
+      const res = {
+        status: (statusCode) => {
+          if (statusCode === 409) {
+            clientExists = true;
+          }
+          return res;
+        },
+        json: (data) => {
+          return data;
+        },
+        send: (msg) => {
+          if (msg.includes("already exists")) {
+            clientExists = true;
+          }
+        },
+      };
+
+      await clientController.create(req, res);
+
+      if (clientExists) {
+        console.log(
+          `[SEEDING] Cliente '${clientData.email}' já existe. Ignorando.`
+        );
+      } else {
+        console.log(
+          `[SEEDING] Cliente '${clientData.email}' inserido com sucesso.`
+        );
+      }
+    } catch (error) {
+      console.error(
+        `[SEEDING ERROR] Falha ao inserir cliente ${clientData.email}:`,
+        error.message
+      );
+    }
+  }
+  console.log("Seeding de clientes concluído.");
+}
+
 // Create new client
 app.post("/clients", async (req, res) => {
   console.log("POST client received");
@@ -29,6 +92,12 @@ app.put("/clients/:id", async (req, res) => {
   await clientController.update(req, res);
 });
 
-app.listen(PORT, () => {
-  console.log(`[Client Service] listening on port: ${PORT}`);
-});
+async function startServer() {
+  await seedDefaultClients();
+
+  app.listen(PORT, () => {
+    console.log(`[Client Service] listening on port: ${PORT}`);
+  });
+}
+
+startServer();

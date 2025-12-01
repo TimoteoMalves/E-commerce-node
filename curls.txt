@@ -1,0 +1,123 @@
+CURLS: 
+
+------- CLIENTS
+
+CREATE:
+
+	curl -X POST 'http://localhost:3001/clients' \
+	-H 'Content-Type: application/json' \
+	-d '{
+	  "firstName": "Ana",
+	  "lastName": "Silva",
+	  "email": "ana.silva@exemplo.com"
+	}'
+
+GET CLIENT BY ID: 
+
+	curl -X GET 'http://localhost:3001/clients/1'
+
+GET ALL CLIENTS: 
+
+	curl -X GET 'http://localhost:3001/clients'
+
+UPDATE CLIENT:
+
+	curl -X PUT 'http://localhost:3001/clients/1' \
+	-H 'Content-Type: application/json' \
+	-d '{
+	  "firstName": "Fabricio",
+	  "lastName": "Silva",
+	  "email": "naomereceu@gmail.com"
+	}'
+
+PRODUCTS ------------------------------------------------
+
+CREATE:
+
+	curl -X POST 'http://localhost:3002/products' \
+	-H 'Content-Type: application/json' \
+	-d '{
+	  "name": "Micro-ondas",
+	  "description": "20L, Inox",
+	  "price": 550.00,
+	  "stock": 40
+	}'
+
+GET BY ID: 
+
+	curl -X GET 'http://localhost:3002/products/1'
+
+UPDATE STOCK: 
+
+	curl -X PATCH 'http://localhost:3002/products/1/stock' \
+	-H 'Content-Type: application/json' \
+	-d '{
+	  "stock": 10
+	}'
+
+DELETE: 
+
+	curl -X DELETE 'http://localhost:3002/products/3'
+
+ORDER --------------------------------------------------
+
+CREATE: 
+
+	curl -X POST 'http://localhost:3003/orders/clients/1' \
+	-H 'Content-Type: application/json' \
+	-d '{
+	  "description": "Pedido via API",
+	  "totalPrice": 150.00,
+	  "clientId": 1,
+	  "products": [
+	    {
+	      "id": "1",
+	      "quantity": 1,
+	      "subtotal": 999.50
+	    }
+	  ]
+	}'	
+
+
+GET BY CLIENT: 
+
+	curl -X GET 'http://localhost:3003/clients/1/orders'
+
+GET BY ID: 
+
+	curl -X GET 'http://localhost:3003/orders/{MONGO_ORDER_ID}'
+
+UPDATE STATUS: 
+
+	curl -X PATCH 'http://localhost:3003/orders/{MONGO_ORDER_ID}/status' \
+	-H 'Content-Type: application/json' \
+	-d '{
+	  "status": "PAID"
+	}'
+
+
+PAYMENTS --------------------------------------------------------
+
+CREATE: 
+
+	curl -X POST 'http://localhost:3004/payments' \
+	-H 'Content-Type: application/json' \
+	-d '{
+	  "orderId": "{MONGO_ORDER_ID}",
+	  "paymentTypeId": 1, 
+	  "amount": 1200.00,
+	  "gatewayReference": "REF-ABC-456" 
+	}'
+
+GET BY ID: 
+
+	curl -X GET 'http://localhost:3004/payments/{PAYMENT_ID}'
+
+CREATE PAYMENTTYPE: 
+
+	curl -X POST 'http://localhost:3004/payments/method' \
+	-H 'Content-Type: application/json' \
+	-d '{
+	  "name": "Cartão de Crédito",
+	  "code": "CC"
+	}'

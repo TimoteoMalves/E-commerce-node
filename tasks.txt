@@ -1,2 +1,3 @@
 - todas as rotas estão funcionando.
 - docker exec -it clients_service npx prisma db push (tive que rodar isso)
+- docker exec -it orders-db mongosh --eval "rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"orders-db:27017\"}]}, {force:true});"

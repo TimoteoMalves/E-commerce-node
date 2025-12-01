@@ -79,6 +79,7 @@ services:
       - order-service
       - kafka
       - rabbitmq
+    command: sh -c "./wait-for-it.sh payments-db:5432 -- npx prisma db push --force --skip-generate && npm run start-server"
 
   client-service:
     build: ./client-service

@@ -1,3 +1,7 @@
-- todas as rotas estão funcionando.
-- docker exec -it clients_service npx prisma db push (tive que rodar isso)
-- docker exec -it orders-db mongosh --eval "rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"orders-db:27017\"}]}, {force:true});"
+comando 1 - docker exec -it clients_service npx prisma db push
+comando 2 - docker exec -it orders-db mongosh --eval "rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"orders-db:27017\"}]}, {force:true});"
+- Seeds estão implementadas
+
+- Não tem kong, portanto sem rate limit...
+- Não estão cacheadas
+- Tudo sobe no docker compose up, com exceção de dois comandos (o 1 e o 2 acima)
